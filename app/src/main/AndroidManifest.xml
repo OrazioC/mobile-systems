@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".HomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,6 +19,7 @@
         <receiver android:name=".broadcastreceiver.WiFi2P2BroadcastReceiver" >
             <intent-filter>
                 <action android:name="android.net.wifi.p2p.STATE_CHANGED" />
+                <action android:name="android.net.wifi.p2p.CONNECTION_STATE_CHANGE" />
             </intent-filter>
         </receiver>
     </application>

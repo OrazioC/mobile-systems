@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ShopForYou</string>
+
+    <string name="cash_register_label">Choose your cash register</string>
 </resources>

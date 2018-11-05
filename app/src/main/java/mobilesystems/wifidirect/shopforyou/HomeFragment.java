@@ -1,5 +1,6 @@
 package mobilesystems.wifidirect.shopforyou;
 
+import android.content.Context;
 import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
@@ -14,6 +15,8 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import mobilesystems.wifidirect.shopforyou.broadcastreceiver.WiFi2P2BroadcastReceiver;
+
+import static android.os.Looper.getMainLooper;
 
 public class HomeFragment extends Fragment implements HomeFragmentContract.View {
 
@@ -45,14 +48,17 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         peerList.setAdapter(adapter);
         peerList.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        presenter = new HomeFragmentPresenter(this, adapter);
+        WifiP2pManager manager = (WifiP2pManager) getActivity().getSystemService(Context.WIFI_P2P_SERVICE);
+        // Needs android.permission.ACCESS_WIFI_STATE, android.permission.CHANGE_WIFI_STATE
+        WifiP2pManager.Channel channel = manager.initialize(getContext(), getMainLooper(), null);
+        presenter = new HomeFragmentPresenter(this, adapter, manager, channel);
         broadcastReceiver = new WiFi2P2BroadcastReceiver(presenter);
 
         View button = rootView.findViewById(R.id.request_peers);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                presenter.populateList();
+                presenter.startDiscovery();
             }
         });
 
@@ -72,7 +78,17 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     }
 
     @Override
-    public void displayWiFiStatus(String status) {
+    public void displayWiFiStatus(@NonNull String status) {
         Toast.makeText(getContext(), status, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void displayDiscoveryInitiated(@NonNull String confirmationMessage) {
+        Toast.makeText(getContext(), confirmationMessage, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void displayDiscoveryFailure(@NonNull String errorMessage) {
+        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
     }
 }

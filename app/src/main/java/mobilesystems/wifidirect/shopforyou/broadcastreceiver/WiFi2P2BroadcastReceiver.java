@@ -63,18 +63,19 @@ public class WiFi2P2BroadcastReceiver extends BroadcastReceiver {
              */
             if (WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
                 Log.d(TAG, "received intent: " + WIFI_P2P_PEERS_CHANGED_ACTION);
-                //TODO we might want the P2P manager to request the list of peers
+
+                homePresenter.populateList();
             } else
                 /*
                  * //TODO Add comment
                  */
-                if (WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(intent)) {
+                if (WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
                     Log.d(TAG, "received intent: " + WIFI_P2P_CONNECTION_CHANGED_ACTION);
                 } else
                     /*
                      * //TODO Add comment
                      */
-                    if (WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(intent)) {
+                    if (WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
                         Log.d(TAG, "received intent: " + WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
                     }
     }

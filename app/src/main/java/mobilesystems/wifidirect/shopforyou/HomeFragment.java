@@ -1,8 +1,12 @@
 package mobilesystems.wifidirect.shopforyou;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,11 +21,13 @@ import android.widget.Toast;
 import mobilesystems.wifidirect.shopforyou.broadcastreceiver.WiFi2P2BroadcastReceiver;
 
 import static android.os.Looper.getMainLooper;
+import static android.support.v4.content.PermissionChecker.checkSelfPermission;
 
 public class HomeFragment extends Fragment implements HomeFragmentContract.View {
 
+    private static final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 1001;
+
     private HomeFragmentContract.Presenter presenter;
-    private PeerListAdapter adapter;
     private WiFi2P2BroadcastReceiver broadcastReceiver;
     private final IntentFilter intentFilter = new IntentFilter();
 
@@ -44,7 +50,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         View rootView = inflater.inflate(R.layout.home_fragment, container, false);
 
         RecyclerView peerList = rootView.findViewById(R.id.peer_list);
-        adapter = new PeerListAdapter();
+        PeerListAdapter adapter = new PeerListAdapter();
         peerList.setAdapter(adapter);
         peerList.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -58,7 +64,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                presenter.startDiscovery();
+                checkPermission();
             }
         });
 
@@ -74,7 +80,37 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     @Override
     public void onPause() {
         super.onPause();
+        //To prevent memory leaks
         getActivity().unregisterReceiver(broadcastReceiver);
+    }
+
+    /**
+     * Check permission is needed to display the list of peers {@link WifiP2pManager#requestPeers}
+     * otherwise list will always result empty for Android 8 (Oreo)
+     *
+     * https://stackoverflow.com/questions/46097660/android-o-issues-with-wifi-peer-discovery
+     * related issue:
+     * https://stackoverflow.com/questions/32151603/scan-results-available-action-return-empty-list-in-android-6-0
+     */
+    private void checkPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            // Wait for callback in onRequestPermissionsResult(int, String[], int[])
+
+        } else {
+            //do something, permission was previously granted; or legacy device
+            presenter.startDiscovery();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            presenter.startDiscovery();
+        }
     }
 
     @Override

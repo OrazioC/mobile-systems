@@ -7,10 +7,11 @@ public interface HomeFragmentContract {
 
         void displayWiFiStatus(@NonNull String status);
 
-        void displayDiscoveryInitiated(@NonNull String confirmationMessage);
+        void displayConfirmationMessage(@NonNull String confirmationMessage);
 
-        void displayDiscoveryFailure(@NonNull String errorMessage);
+        void displayError(@NonNull String errorMessage);
     }
+
     interface Presenter {
 
         void startDiscovery();

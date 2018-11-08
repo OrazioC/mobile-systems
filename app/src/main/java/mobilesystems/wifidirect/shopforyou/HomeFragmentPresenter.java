@@ -1,5 +1,7 @@
 package mobilesystems.wifidirect.shopforyou;
 
+import android.net.wifi.WpsInfo;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -15,7 +17,10 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private @NonNull PeerListAdapterContract.Presenter listAdapterPresenter;
     private @NonNull WifiP2pManager manager;
     private @NonNull WifiP2pManager.Channel channel;
+    private @NonNull DeviceConnectionStatusMapper deviceConnectionStatusMapper;
     private @NonNull DiscoveryFailureErrorMapper errorMapper;
+
+    private @NonNull List<WifiP2pDevice> devices = new ArrayList<>();
 
     public HomeFragmentPresenter(@NonNull HomeFragmentContract.View view,
                                  @NonNull PeerListAdapter adapter,
@@ -25,6 +30,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         this.listAdapterPresenter = new PeerListAdapterPresenter(adapter);
         this.manager = manager;
         this.channel = channel;
+        this.deviceConnectionStatusMapper = new DeviceConnectionStatusMapper();
         this.errorMapper = new DiscoveryFailureErrorMapper();
     }
 
@@ -33,13 +39,13 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                view.displayDiscoveryInitiated("Discovery Initiated");
+                view.displayConfirmationMessage("Discovery Initiated");
             }
 
             @Override
             public void onFailure(int reason) {
                 String errorMessage = errorMapper.map(reason);
-                view.displayDiscoveryFailure(errorMessage);
+                view.displayError(errorMessage);
             }
         });
     }
@@ -49,9 +55,16 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         manager.requestPeers(channel, new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                List<String> peerList = new ArrayList<>();
-                for (WifiP2pDevice device : wifiP2pDeviceList.getDeviceList()) {
-                    peerList.add(device.deviceName + " " + device.deviceAddress + " " + device.primaryDeviceType + " " + device.status);
+                devices.clear();
+                devices.addAll(wifiP2pDeviceList.getDeviceList());
+                List<PeerModel> peerList = new ArrayList<>();
+                for (final WifiP2pDevice device : wifiP2pDeviceList.getDeviceList()) {
+                    peerList.add(new PeerModel(device.deviceName, device.deviceAddress, device.primaryDeviceType, deviceConnectionStatusMapper.map(device.status), new Runnable() {
+                        @Override
+                        public void run() {
+                            connect(device.deviceAddress);
+                        }
+                    }));
                 }
                 listAdapterPresenter.populateList(peerList);
             }
@@ -61,6 +74,26 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     @Override
     public void showWiFiStatus(boolean isWiFiEnabled) {
         view.displayWiFiStatus(isWiFiEnabled ? "WiFi P2P is enabled" : "WiFi P2P is disable");
+    }
+
+    private void connect(@NonNull String deviceAddress) {
+        WifiP2pConfig config = new WifiP2pConfig();
+        config.deviceAddress = deviceAddress;
+        config.wps.setup = WpsInfo.PBC;
+        /*
+         * registers for WIFI_P2P_CONNECTION_CHANGED_ACTION
+         */
+        manager.connect(channel, config, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                view.displayConfirmationMessage("Connection successful");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                view.displayError(errorMapper.map(reason));
+            }
+        });
     }
 
 

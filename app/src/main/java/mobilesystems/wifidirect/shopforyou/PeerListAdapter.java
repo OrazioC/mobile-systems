@@ -10,27 +10,36 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-class PeerListAdapter extends RecyclerView.Adapter<PeerListAdapter.ViewHolder> implements PeerListAdapterContract.View {
+class PeerListAdapter extends RecyclerView.Adapter<PeerListAdapter.PeerViewHolder> implements PeerListAdapterContract.View {
 
-    private @NonNull
-    List<String> peerList = new ArrayList<>();
+    private @NonNull List<PeerModel> peerList = new ArrayList<>();
 
     @Override
-    public void setPeerList(@NonNull List<String> peerList) {
+    public void setPeerList(@NonNull List<PeerModel> peerList) {
         this.peerList.clear();
         this.peerList.addAll(peerList);
         notifyDataSetChanged();
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public PeerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.peer_card, parent, false);
-        return new ViewHolder(v);
+        return new PeerViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder viewHolder, int position) {
-        viewHolder.getTextView().setText(peerList.get(position));
+    public void onBindViewHolder(PeerViewHolder viewHolder, int position) {
+        final PeerModel peer = peerList.get(position);
+        viewHolder.getPeerNameView().setText(peer.name);
+        viewHolder.getPeerAddressView().setText(peer.address);
+        viewHolder.getPeerTypeView().setText(peer.type);
+        viewHolder.getPeerStatusView().setText(peer.status);
+        viewHolder.getConnectView().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                peer.connectTask.run();
+            }
+        });
     }
 
     @Override
@@ -38,18 +47,31 @@ class PeerListAdapter extends RecyclerView.Adapter<PeerListAdapter.ViewHolder> i
         return peerList.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class PeerViewHolder extends RecyclerView.ViewHolder {
 
-        private final TextView textView;
+        private final TextView peerNameView;
+        private final TextView peerAddressView;
+        private final TextView peerTypeView;
+        private final TextView peerStatusView;
+        private final TextView connectView;
 
-        public ViewHolder(View itemView) {
+        public PeerViewHolder(View itemView) {
             super(itemView);
 
-            textView = itemView.findViewById(R.id.peer_name);
+            peerNameView = itemView.findViewById(R.id.peer_name);
+            peerAddressView  = itemView.findViewById(R.id.peer_address);
+            peerTypeView  = itemView.findViewById(R.id.peer_type);
+            peerStatusView = itemView.findViewById(R.id.peer_status);
+            connectView = itemView.findViewById(R.id.connect_to_peer);
+
         }
 
-        public TextView getTextView() {
-            return textView;
+        public TextView getPeerNameView() {
+            return peerNameView;
         }
+        public TextView getPeerAddressView() { return peerAddressView; }
+        public TextView getPeerTypeView() { return peerTypeView; }
+        public TextView getPeerStatusView() { return peerStatusView; }
+        public TextView getConnectView() { return connectView; }
     }
 }

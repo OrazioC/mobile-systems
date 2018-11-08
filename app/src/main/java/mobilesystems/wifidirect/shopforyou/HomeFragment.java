@@ -60,14 +60,13 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         presenter = new HomeFragmentPresenter(this, adapter, manager, channel);
         broadcastReceiver = new WiFi2P2BroadcastReceiver(presenter);
 
-        View button = rootView.findViewById(R.id.request_peers);
-        button.setOnClickListener(new View.OnClickListener() {
+        View discoverPeersCta = rootView.findViewById(R.id.request_peers);
+        discoverPeersCta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 checkPermission();
             }
         });
-
         return rootView;
     }
 
@@ -119,12 +118,12 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     }
 
     @Override
-    public void displayDiscoveryInitiated(@NonNull String confirmationMessage) {
+    public void displayConfirmationMessage(@NonNull String confirmationMessage) {
         Toast.makeText(getContext(), confirmationMessage, Toast.LENGTH_LONG).show();
     }
 
     @Override
-    public void displayDiscoveryFailure(@NonNull String errorMessage) {
+    public void displayError(@NonNull String errorMessage) {
         Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
     }
 }

@@ -13,7 +13,7 @@ public class PeerListAdapterPresenter implements PeerListAdapterContract.Present
     }
 
     @Override
-    public void populateList(@NonNull List<String> peerList) {
+    public void populateList(@NonNull List<PeerModel> peerList) {
         adapter.setPeerList(peerList);
     }
 }

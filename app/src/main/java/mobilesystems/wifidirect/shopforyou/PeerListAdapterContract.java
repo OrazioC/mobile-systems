@@ -7,10 +7,10 @@ import java.util.List;
 public interface PeerListAdapterContract {
     interface View {
 
-        void setPeerList(@NonNull List<String> peerList);
+        void setPeerList(@NonNull List<PeerModel> peerList);
     }
     interface Presenter {
 
-        void populateList(@NonNull List<String> peerList);
+        void populateList(@NonNull List<PeerModel> peerList);
     }
 }

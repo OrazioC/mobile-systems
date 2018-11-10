@@ -7,9 +7,16 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterContract;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterPresenter;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerListener;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerModel;
 
 public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, WifiP2pManager.PeerListListener, WifiP2pManager.ConnectionInfoListener {
 
@@ -19,8 +26,6 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private @NonNull WifiP2pManager.Channel channel;
     private @NonNull DeviceConnectionStatusMapper deviceConnectionStatusMapper;
     private @NonNull DiscoveryFailureErrorMapper errorMapper;
-
-    private @NonNull List<WifiP2pDevice> devices = new ArrayList<>();
 
     public HomeFragmentPresenter(@NonNull HomeFragmentContract.View view,
                                  @NonNull PeerListAdapter adapter,
@@ -34,6 +39,22 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         this.errorMapper = new DiscoveryFailureErrorMapper();
     }
 
+    @Override
+    public void init() {
+        listAdapterPresenter.setListener(new PeerListener(){
+            @Override
+            public void onClick(@NonNull PeerModel model) {
+                connect(model.address);
+            }
+        });
+    }
+
+    @Override
+    public void showWiFiStatus(boolean isWiFiEnabled) {
+        view.displayWiFiStatus(isWiFiEnabled ? "WiFi P2P is enabled" : "WiFi P2P is disable");
+    }
+
+    //region WifiP2PManager
     @Override
     public void startDiscovery() {
         manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
@@ -51,29 +72,15 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
 
     @Override
-    public void populateList() {
-        manager.requestPeers(channel, new WifiP2pManager.PeerListListener() {
-            @Override
-            public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                devices.clear();
-                devices.addAll(wifiP2pDeviceList.getDeviceList());
-                List<PeerModel> peerList = new ArrayList<>();
-                for (final WifiP2pDevice device : wifiP2pDeviceList.getDeviceList()) {
-                    peerList.add(new PeerModel(device.deviceName, device.deviceAddress, device.primaryDeviceType, deviceConnectionStatusMapper.map(device.status), new Runnable() {
-                        @Override
-                        public void run() {
-                            connect(device.deviceAddress);
-                        }
-                    }));
-                }
-                listAdapterPresenter.populateList(peerList);
-            }
-        });
+    public void populatePeerList() {
+        // WifiP2pManager.PeerListListener
+        manager.requestPeers(channel, this);
     }
 
     @Override
-    public void showWiFiStatus(boolean isWiFiEnabled) {
-        view.displayWiFiStatus(isWiFiEnabled ? "WiFi P2P is enabled" : "WiFi P2P is disable");
+    public void requestDeviceConnectionInfo() {
+        // WifiP2pManager.ConnectionInfoListener
+        manager.requestConnectionInfo(channel, this);
     }
 
     private void connect(@NonNull String deviceAddress) {
@@ -95,17 +102,25 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
             }
         });
     }
+    //endregion
 
-
-    // WifiP2pManager.PeerListListener
+    //region WifiP2pManager.PeerListListener
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peers) {
-
+        List<PeerModel> peerList = new ArrayList<>();
+        for (final WifiP2pDevice device : peers.getDeviceList()) {
+            peerList.add(new PeerModel(device.deviceName, device.deviceAddress, device.primaryDeviceType, deviceConnectionStatusMapper.map(device.status)));
+        }
+        listAdapterPresenter.populateList(peerList);
     }
+    //endregion
 
-    // WifiP2pManager.ConnectionInfoListener
+    //region WifiP2pManager.ConnectionInfoListener
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-
+        Log.d("Orazio", info.toString());
     }
+    //endregion
+
+
 }

@@ -1,7 +1,6 @@
 package mobilesystems.wifidirect.shopforyou;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -18,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.broadcastreceiver.WiFi2P2BroadcastReceiver;
 
 import static android.os.Looper.getMainLooper;
@@ -58,6 +58,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         // Needs android.permission.ACCESS_WIFI_STATE, android.permission.CHANGE_WIFI_STATE
         WifiP2pManager.Channel channel = manager.initialize(getContext(), getMainLooper(), null);
         presenter = new HomeFragmentPresenter(this, adapter, manager, channel);
+        presenter.init();
         broadcastReceiver = new WiFi2P2BroadcastReceiver(presenter);
 
         View discoverPeersCta = rootView.findViewById(R.id.request_peers);

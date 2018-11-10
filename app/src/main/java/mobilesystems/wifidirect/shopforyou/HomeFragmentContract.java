@@ -14,10 +14,14 @@ public interface HomeFragmentContract {
 
     interface Presenter {
 
-        void startDiscovery();
-
-        void populateList();
+        void init();
 
         void showWiFiStatus(boolean isWiFiEnabled);
+
+        void startDiscovery();
+
+        void populatePeerList();
+
+        void requestDeviceConnectionInfo();
     }
 }

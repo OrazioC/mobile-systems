@@ -1,4 +1,4 @@
-package mobilesystems.wifidirect.shopforyou;
+package mobilesystems.wifidirect.shopforyou.peerlist;
 
 import android.support.annotation.NonNull;
 
@@ -15,5 +15,10 @@ public class PeerListAdapterPresenter implements PeerListAdapterContract.Present
     @Override
     public void populateList(@NonNull List<PeerModel> peerList) {
         adapter.setPeerList(peerList);
+    }
+
+    @Override
+    public void setListener(@NonNull PeerListener listener) {
+        adapter.setListener(listener);
     }
 }

@@ -10,6 +10,13 @@ public interface HomeFragmentContract {
         void displayConfirmationMessage(@NonNull String confirmationMessage);
 
         void displayError(@NonNull String errorMessage);
+
+        void displayDeviceInfo(@NonNull String deviceInfo,
+                               @NonNull String groupOwnerIpAddress);
+
+        void displayMessageFromOtherPeer(@NonNull String message);
+
+        void startTransferService(@NonNull String address);
     }
 
     interface Presenter {
@@ -23,5 +30,9 @@ public interface HomeFragmentContract {
         void populatePeerList();
 
         void requestDeviceConnectionInfo();
+
+        void displayMessage(@NonNull String message);
+
+        void sendMessageToConnectedPeer();
     }
 }

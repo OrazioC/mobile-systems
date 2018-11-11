@@ -15,6 +15,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
@@ -26,6 +27,10 @@ import static android.support.v4.content.PermissionChecker.checkSelfPermission;
 public class HomeFragment extends Fragment implements HomeFragmentContract.View {
 
     private static final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 1001;
+
+    private TextView deviceInfoTextView;
+    private TextView ownerIPAddressTextView;
+    private TextView messageFromTheOtherSideTextView;
 
     private HomeFragmentContract.Presenter presenter;
     private WiFi2P2BroadcastReceiver broadcastReceiver;
@@ -61,11 +66,23 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         presenter.init();
         broadcastReceiver = new WiFi2P2BroadcastReceiver(presenter);
 
+        deviceInfoTextView = rootView.findViewById(R.id.device_info);
+        ownerIPAddressTextView = rootView.findViewById(R.id.group_owner_ip_address);
+        messageFromTheOtherSideTextView = rootView.findViewById(R.id.message_from_other_peer);
+
         View discoverPeersCta = rootView.findViewById(R.id.request_peers);
         discoverPeersCta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 checkPermission();
+            }
+        });
+
+        View sendMessageCta = rootView.findViewById(R.id.send_message);
+        sendMessageCta.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                presenter.sendMessageToConnectedPeer();
             }
         });
         return rootView;
@@ -126,5 +143,22 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     @Override
     public void displayError(@NonNull String errorMessage) {
         Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void displayDeviceInfo(@NonNull String deviceInfo,
+                                  @NonNull String groupOwnerIpAddress) {
+        deviceInfoTextView.setText(deviceInfo);
+        ownerIPAddressTextView.setText(groupOwnerIpAddress);
+    }
+
+    @Override
+    public void displayMessageFromOtherPeer(@NonNull String message) {
+        messageFromTheOtherSideTextView.setText(message);
+    }
+
+    @Override
+    public void startTransferService(@NonNull String address) {
+        getActivity().startService(InfoTransferService.createIntent(getContext(), address));
     }
 }

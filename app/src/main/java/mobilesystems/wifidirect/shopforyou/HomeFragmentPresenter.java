@@ -27,6 +27,8 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private @NonNull DeviceConnectionStatusMapper deviceConnectionStatusMapper;
     private @NonNull DiscoveryFailureErrorMapper errorMapper;
 
+    private @NonNull List<WifiP2pInfo> groupPeerInfoList = new ArrayList<>();
+
     public HomeFragmentPresenter(@NonNull HomeFragmentContract.View view,
                                  @NonNull PeerListAdapter adapter,
                                  @NonNull WifiP2pManager manager,
@@ -37,6 +39,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         this.channel = channel;
         this.deviceConnectionStatusMapper = new DeviceConnectionStatusMapper();
         this.errorMapper = new DiscoveryFailureErrorMapper();
+
     }
 
     @Override
@@ -83,6 +86,16 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         manager.requestConnectionInfo(channel, this);
     }
 
+    @Override
+    public void displayMessage(@NonNull String message) {
+        view.displayMessageFromOtherPeer(message);
+    }
+
+    @Override
+    public void sendMessageToConnectedPeer() {
+        view.startTransferService(groupPeerInfoList.get(0).groupOwnerAddress.getHostAddress());
+    }
+
     private void connect(@NonNull String deviceAddress) {
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = deviceAddress;
@@ -118,7 +131,17 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     //region WifiP2pManager.ConnectionInfoListener
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-        Log.d("Orazio", info.toString());
+        //TODO we need to clear this list as it might cause unwanted behaviors. Like trying to connect to an old IP or similar?
+        this.groupPeerInfoList.add(info);
+
+        view.displayDeviceInfo(
+                info.isGroupOwner ? "The device is the group owner" : "device is part of a group",
+                info.groupOwnerAddress.toString()
+        );
+
+        if (info.groupFormed && info.isGroupOwner) {
+            new InfoTransferAsyncTask(this).execute();
+        }
     }
     //endregion
 

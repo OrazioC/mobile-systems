@@ -3,14 +3,18 @@ package mobilesystems.wifidirect.shopforyou;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterContract;
@@ -18,7 +22,12 @@ import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterPresenter;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListener;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerModel;
 
-public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, WifiP2pManager.PeerListListener, WifiP2pManager.ConnectionInfoListener {
+public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, WifiP2pManager.ConnectionInfoListener {
+
+    private static final String TAG = "MOBILE_SYSTEM";
+    private static final String SERVICE_INSTANCE = "_mobilesystem";
+    private static final String TRANSPORT_PROTOCOL = "_tcp";
+    private static final String SERVICE_TYPE = "_presence." + TRANSPORT_PROTOCOL;
 
     private @NonNull HomeFragmentContract.View view;
     private @NonNull PeerListAdapterContract.Presenter listAdapterPresenter;
@@ -28,6 +37,9 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private @NonNull DiscoveryFailureErrorMapper errorMapper;
 
     private @NonNull List<WifiP2pInfo> groupPeerInfoList = new ArrayList<>();
+    private WifiP2pDnsSdServiceInfo service;
+    private WifiP2pDnsSdServiceRequest serviceRequest;
+
 
     public HomeFragmentPresenter(@NonNull HomeFragmentContract.View view,
                                  @NonNull PeerListAdapter adapter,
@@ -44,7 +56,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
 
     @Override
     public void init() {
-        listAdapterPresenter.setListener(new PeerListener(){
+        listAdapterPresenter.setListener(new PeerListener() {
             @Override
             public void onClick(@NonNull PeerModel model) {
                 connect(model.address);
@@ -58,27 +70,6 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
 
     //region WifiP2PManager
-    @Override
-    public void startDiscovery() {
-        manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                view.displayConfirmationMessage("Discovery Initiated");
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                String errorMessage = errorMapper.map(reason);
-                view.displayError(errorMessage);
-            }
-        });
-    }
-
-    @Override
-    public void populatePeerList() {
-        // WifiP2pManager.PeerListListener
-        manager.requestPeers(channel, this);
-    }
 
     @Override
     public void requestDeviceConnectionInfo() {
@@ -96,10 +87,153 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         view.startTransferService(groupPeerInfoList.get(0).groupOwnerAddress.getHostAddress());
     }
 
+    @Override
+    public void register() {
+        Map<String, String> record = Collections.emptyMap();
+        service = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_INSTANCE, SERVICE_TYPE, record);
+        manager.addLocalService(channel, service, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                view.displayConfirmationMessage("Service registered");
+            }
+
+            @Override
+            public void onFailure(int error) {
+                view.displayError("Failed to add a service");
+            }
+        });
+    }
+
+    @Override
+    public void discover() {
+        attachDnsSdListeners();
+        createServiceRequest();
+        discoverService();
+    }
+
+    //region Discover Service
+    private void attachDnsSdListeners() {
+        WifiP2pManager.DnsSdServiceResponseListener serviceListener =
+                new WifiP2pManager.DnsSdServiceResponseListener() {
+                    @Override
+                    public void onDnsSdServiceAvailable(String instanceName,
+                                                        String registrationType,
+                                                        WifiP2pDevice device) {
+
+                        if (SERVICE_INSTANCE.equalsIgnoreCase(instanceName)) {
+                            List<PeerModel> peerList = Collections.singletonList(
+                                    new PeerModel(device.deviceName, device.deviceAddress,
+                                            device.primaryDeviceType,
+                                            deviceConnectionStatusMapper.map(device.status)));
+                            listAdapterPresenter.populateList(peerList);
+                        } else {
+                            Log.d(TAG, "received service: " + instanceName);
+                        }
+                    }
+                };
+        WifiP2pManager.DnsSdTxtRecordListener txtRecordListener =
+                new WifiP2pManager.DnsSdTxtRecordListener() {
+                    /**
+                     * A new TXT record is available.
+                     */
+                    @Override
+                    public void onDnsSdTxtRecordAvailable(
+                            String fullDomainName, Map<String, String> record,
+                            WifiP2pDevice device) {
+                        Log.d(TAG, "Txt record available: " + device.deviceName);
+                    }
+                };
+        manager.setDnsSdResponseListeners(channel, serviceListener, txtRecordListener);
+    }
+
+    private void createServiceRequest() {
+        serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        manager.addServiceRequest(channel, serviceRequest,
+                new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        view.displayConfirmationMessage("Added service discovery request");
+                    }
+
+                    @Override
+                    public void onFailure(int arg0) {
+                        view.displayError("Failed adding service discovery request");
+                    }
+                });
+    }
+
+    private void discoverService() {
+        manager.discoverServices(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                view.displayConfirmationMessage("Service discovery initiated");
+            }
+
+            @Override
+            public void onFailure(int arg0) {
+                view.displayError("Service discovery failed");
+            }
+        });
+    }
+    //endregion
+
+    @Override
+    public void unregisterServiceRequest() {
+        if (serviceRequest != null) {
+            manager.removeServiceRequest(channel, serviceRequest, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    view.displayConfirmationMessage("Removed service discovery request");
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    view.displayError("Failed removing service discovery request");
+                }
+            });
+        }
+    }
+
+    //region Release Resources
+    @Override
+    public void stopDiscovery() {
+        manager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                view.displayConfirmationMessage("Service discovery stopped");
+            }
+
+            @Override
+            public void onFailure(int arg0) {
+                view.displayError("Service discovery stop failed");
+            }
+        });
+    }
+
+    @Override
+    public void destroyGroup() {
+        manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+
+            @Override
+            public void onFailure(int reasonCode) {
+                view.displayError("Group removal failed");
+            }
+
+            @Override
+            public void onSuccess() {
+                view.displayConfirmationMessage("Group removed");
+            }
+
+        });
+    }
+    //endregion
+
     private void connect(@NonNull String deviceAddress) {
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = deviceAddress;
         config.wps.setup = WpsInfo.PBC;
+
+        unregisterServiceRequest();
         /*
          * registers for WIFI_P2P_CONNECTION_CHANGED_ACTION
          */
@@ -117,15 +251,6 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
     //endregion
 
-    //region WifiP2pManager.PeerListListener
-    @Override
-    public void onPeersAvailable(WifiP2pDeviceList peers) {
-        List<PeerModel> peerList = new ArrayList<>();
-        for (final WifiP2pDevice device : peers.getDeviceList()) {
-            peerList.add(new PeerModel(device.deviceName, device.deviceAddress, device.primaryDeviceType, deviceConnectionStatusMapper.map(device.status)));
-        }
-        listAdapterPresenter.populateList(peerList);
-    }
     //endregion
 
     //region WifiP2pManager.ConnectionInfoListener

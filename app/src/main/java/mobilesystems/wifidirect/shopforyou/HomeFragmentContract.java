@@ -25,14 +25,20 @@ public interface HomeFragmentContract {
 
         void showWiFiStatus(boolean isWiFiEnabled);
 
-        void startDiscovery();
-
-        void populatePeerList();
-
         void requestDeviceConnectionInfo();
 
         void displayMessage(@NonNull String message);
 
         void sendMessageToConnectedPeer();
+
+        void register();
+
+        void discover();
+
+        void unregisterServiceRequest();
+
+        void stopDiscovery();
+
+        void destroyGroup();
     }
 }

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -64,16 +65,15 @@ public class WiFi2P2BroadcastReceiver extends BroadcastReceiver {
              * It can happen when a peer is found, lost or updated
              */
             if (WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
+                //Ignoring this intent as the list of peers is handled in the Service Request Callback
                 Log.d(TAG, "received intent: " + WIFI_P2P_PEERS_CHANGED_ACTION);
-
-                homePresenter.populatePeerList();
             } else
                 /*
                  * //TODO Add comment
                  */
                 if (WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
                     Log.d(TAG, "received intent: " + WIFI_P2P_CONNECTION_CHANGED_ACTION);
-                    // TODO add code to request requestConnectionInfo
+                    // TODO add code to notify update status for the connected device
                     NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
                     if(networkInfo.isConnected()) {
                         homePresenter.requestDeviceConnectionInfo();
@@ -83,7 +83,8 @@ public class WiFi2P2BroadcastReceiver extends BroadcastReceiver {
                      * //TODO Add comment
                      */
                     if (WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
-                        Log.d(TAG, "received intent: " + WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+                        WifiP2pDevice device = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
+                        Log.d(TAG, "received intent: " + WIFI_P2P_THIS_DEVICE_CHANGED_ACTION + "\n" + device);
                     }
     }
 }

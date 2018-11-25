@@ -1,11 +1,8 @@
 package mobilesystems.wifidirect.shopforyou;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -22,11 +19,9 @@ import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.broadcastreceiver.WiFi2P2BroadcastReceiver;
 
 import static android.os.Looper.getMainLooper;
-import static android.support.v4.content.PermissionChecker.checkSelfPermission;
 
 public class HomeFragment extends Fragment implements HomeFragmentContract.View {
 
-    private static final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 1001;
 
     private TextView deviceInfoTextView;
     private TextView ownerIPAddressTextView;
@@ -70,11 +65,17 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         ownerIPAddressTextView = rootView.findViewById(R.id.group_owner_ip_address);
         messageFromTheOtherSideTextView = rootView.findViewById(R.id.message_from_other_peer);
 
-        View discoverPeersCta = rootView.findViewById(R.id.request_peers);
-        discoverPeersCta.setOnClickListener(new View.OnClickListener() {
+        View registerServiceTextView = rootView.findViewById(R.id.register_service);
+        View discoverServiceTextView = rootView.findViewById(R.id.discover_service);
+
+        registerServiceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                checkPermission();
+            public void onClick(View v) { presenter.register();
+            }
+        });
+        discoverServiceTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { presenter.discover();
             }
         });
 
@@ -101,38 +102,17 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         getActivity().unregisterReceiver(broadcastReceiver);
     }
 
-    /**
-     * Check permission is needed to display the list of peers {@link WifiP2pManager#requestPeers}
-     * otherwise list will always result empty for Android 8 (Oreo)
-     *
-     * https://stackoverflow.com/questions/46097660/android-o-issues-with-wifi-peer-discovery
-     * related issue:
-     * https://stackoverflow.com/questions/32151603/scan-results-available-action-return-empty-list-in-android-6-0
-     */
-    private void checkPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
-            // Wait for callback in onRequestPermissionsResult(int, String[], int[])
-
-        } else {
-            //do something, permission was previously granted; or legacy device
-            presenter.startDiscovery();
-        }
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            presenter.startDiscovery();
-        }
+    public void onDestroy() {
+        super.onDestroy();
+        presenter.unregisterServiceRequest();
+        presenter.stopDiscovery();
+        presenter.destroyGroup();
     }
 
     @Override
     public void displayWiFiStatus(@NonNull String status) {
-        Toast.makeText(getContext(), status, Toast.LENGTH_LONG).show();
+//        Toast.makeText(getContext(), status, Toast.LENGTH_LONG).show();
     }
 
     @Override

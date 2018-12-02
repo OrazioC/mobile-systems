@@ -15,17 +15,17 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.broadcastreceiver.WiFi2P2BroadcastReceiver;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 
 import static android.os.Looper.getMainLooper;
+import static java.util.Objects.requireNonNull;
 
 public class HomeFragment extends Fragment implements HomeFragmentContract.View {
 
 
     private TextView deviceInfoTextView;
     private TextView ownerIPAddressTextView;
-    private TextView messageFromTheOtherSideTextView;
 
     private HomeFragmentContract.Presenter presenter;
     private WiFi2P2BroadcastReceiver broadcastReceiver;
@@ -41,13 +41,17 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
     }
 
-    public @Nullable
-    View onCreateView(@NonNull LayoutInflater inflater,
-                      @Nullable ViewGroup container,
-                      @Nullable Bundle savedInstanceState) {
+    public @Nullable View onCreateView(@NonNull LayoutInflater inflater,
+                                       @Nullable ViewGroup container,
+                                       @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        View rootView = inflater.inflate(R.layout.home_fragment, container, false);
+        return inflater.inflate(R.layout.home_fragment, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View rootView, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(rootView, savedInstanceState);
 
         RecyclerView peerList = rootView.findViewById(R.id.peer_list);
         PeerListAdapter adapter = new PeerListAdapter();
@@ -56,26 +60,30 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
 
         WifiP2pManager manager = (WifiP2pManager) getActivity().getSystemService(Context.WIFI_P2P_SERVICE);
         // Needs android.permission.ACCESS_WIFI_STATE, android.permission.CHANGE_WIFI_STATE
-        WifiP2pManager.Channel channel = manager.initialize(getContext(), getMainLooper(), null);
-        presenter = new HomeFragmentPresenter(this, adapter, manager, channel);
+        WifiP2pManager.Channel channel = requireNonNull(manager).initialize(getContext(), getMainLooper(), null);
+
+        WiFiDirectApplication application = (WiFiDirectApplication) getActivity().getApplication();
+
+        presenter = new HomeFragmentPresenter(this, adapter, manager, channel, application.getDatabase());
         presenter.init();
         broadcastReceiver = new WiFi2P2BroadcastReceiver(presenter);
 
         deviceInfoTextView = rootView.findViewById(R.id.device_info);
         ownerIPAddressTextView = rootView.findViewById(R.id.group_owner_ip_address);
-        messageFromTheOtherSideTextView = rootView.findViewById(R.id.message_from_other_peer);
 
         View registerServiceTextView = rootView.findViewById(R.id.register_service);
         View discoverServiceTextView = rootView.findViewById(R.id.discover_service);
 
         registerServiceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { presenter.register();
+            public void onClick(View v) {
+                presenter.register();
             }
         });
         discoverServiceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { presenter.discover();
+            public void onClick(View v) {
+                presenter.discover();
             }
         });
 
@@ -86,7 +94,6 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
                 presenter.sendMessageToConnectedPeer();
             }
         });
-        return rootView;
     }
 
     @Override
@@ -111,11 +118,6 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     }
 
     @Override
-    public void displayWiFiStatus(@NonNull String status) {
-//        Toast.makeText(getContext(), status, Toast.LENGTH_LONG).show();
-    }
-
-    @Override
     public void displayConfirmationMessage(@NonNull String confirmationMessage) {
         Toast.makeText(getContext(), confirmationMessage, Toast.LENGTH_LONG).show();
     }
@@ -130,11 +132,6 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
                                   @NonNull String groupOwnerIpAddress) {
         deviceInfoTextView.setText(deviceInfo);
         ownerIPAddressTextView.setText(groupOwnerIpAddress);
-    }
-
-    @Override
-    public void displayMessageFromOtherPeer(@NonNull String message) {
-        messageFromTheOtherSideTextView.setText(message);
     }
 
     @Override

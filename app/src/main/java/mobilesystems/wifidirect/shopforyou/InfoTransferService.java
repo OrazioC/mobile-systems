@@ -57,7 +57,7 @@ public class InfoTransferService extends IntentService {
                 socket.connect((new InetSocketAddress(host, port)), 5000);
                 Log.d("Transfer Service", "Client socket - " + socket.isConnected());
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                writer.append("dummy message -> welcome to the other side");
+                writer.append("code1\tdescription");
                 writer.flush();
             } catch (IOException e) {
                 e.printStackTrace();

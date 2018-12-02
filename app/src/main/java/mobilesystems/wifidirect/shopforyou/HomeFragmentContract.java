@@ -5,16 +5,12 @@ import android.support.annotation.NonNull;
 public interface HomeFragmentContract {
     interface View {
 
-        void displayWiFiStatus(@NonNull String status);
-
         void displayConfirmationMessage(@NonNull String confirmationMessage);
 
         void displayError(@NonNull String errorMessage);
 
         void displayDeviceInfo(@NonNull String deviceInfo,
                                @NonNull String groupOwnerIpAddress);
-
-        void displayMessageFromOtherPeer(@NonNull String message);
 
         void startTransferService(@NonNull String address);
     }
@@ -23,11 +19,7 @@ public interface HomeFragmentContract {
 
         void init();
 
-        void showWiFiStatus(boolean isWiFiEnabled);
-
         void requestDeviceConnectionInfo();
-
-        void displayMessage(@NonNull String message);
 
         void sendMessageToConnectedPeer();
 
@@ -40,5 +32,7 @@ public interface HomeFragmentContract {
         void stopDiscovery();
 
         void destroyGroup();
+
+        void saveMessage(@NonNull String code, @NonNull String description);
     }
 }

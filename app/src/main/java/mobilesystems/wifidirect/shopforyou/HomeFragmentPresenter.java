@@ -8,14 +8,17 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
+import mobilesystems.wifidirect.shopforyou.database.AppDatabase;
+import mobilesystems.wifidirect.shopforyou.database.ItemEntity;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterContract;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterPresenter;
@@ -35,23 +38,24 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private @NonNull WifiP2pManager.Channel channel;
     private @NonNull DeviceConnectionStatusMapper deviceConnectionStatusMapper;
     private @NonNull DiscoveryFailureErrorMapper errorMapper;
+    private @NonNull AppDatabase database;
 
     private @NonNull List<WifiP2pInfo> groupPeerInfoList = new ArrayList<>();
-    private WifiP2pDnsSdServiceInfo service;
     private WifiP2pDnsSdServiceRequest serviceRequest;
 
 
-    public HomeFragmentPresenter(@NonNull HomeFragmentContract.View view,
-                                 @NonNull PeerListAdapter adapter,
-                                 @NonNull WifiP2pManager manager,
-                                 @NonNull WifiP2pManager.Channel channel) {
+    HomeFragmentPresenter(@NonNull HomeFragmentContract.View view,
+                          @NonNull PeerListAdapter adapter,
+                          @NonNull WifiP2pManager manager,
+                          @NonNull WifiP2pManager.Channel channel,
+                          @NonNull AppDatabase database) {
         this.view = view;
         this.listAdapterPresenter = new PeerListAdapterPresenter(adapter);
         this.manager = manager;
         this.channel = channel;
         this.deviceConnectionStatusMapper = new DeviceConnectionStatusMapper();
         this.errorMapper = new DiscoveryFailureErrorMapper();
-
+        this.database = database;
     }
 
     @Override
@@ -64,22 +68,11 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         });
     }
 
-    @Override
-    public void showWiFiStatus(boolean isWiFiEnabled) {
-        view.displayWiFiStatus(isWiFiEnabled ? "WiFi P2P is enabled" : "WiFi P2P is disable");
-    }
-
     //region WifiP2PManager
-
     @Override
     public void requestDeviceConnectionInfo() {
         // WifiP2pManager.ConnectionInfoListener
         manager.requestConnectionInfo(channel, this);
-    }
-
-    @Override
-    public void displayMessage(@NonNull String message) {
-        view.displayMessageFromOtherPeer(message);
     }
 
     @Override
@@ -90,7 +83,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     @Override
     public void register() {
         Map<String, String> record = Collections.emptyMap();
-        service = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_INSTANCE, SERVICE_TYPE, record);
+        WifiP2pDnsSdServiceInfo service = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_INSTANCE, SERVICE_TYPE, record);
         manager.addLocalService(channel, service, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -270,5 +263,16 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
     //endregion
 
-
+    @Override
+    public void saveMessage(@NonNull String code, @NonNull String description) {
+        final ItemEntity itemEntity = new ItemEntity();
+        itemEntity.setCode(code);
+        itemEntity.setDescription(description);
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                database.itemDao().insert(itemEntity);
+            }
+        });
+    }
 }

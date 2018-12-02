@@ -57,8 +57,6 @@ public class WiFi2P2BroadcastReceiver extends BroadcastReceiver {
              */
             int wifiP2PState = intent.getIntExtra(EXTRA_WIFI_STATE, -1);
             Log.d(TAG, "WiFi P2P status: " + wifiP2PState);
-
-            homePresenter.showWiFiStatus(WIFI_P2P_STATE_ENABLED == wifiP2PState);
         } else
             /*
              * Intent is received when the peer list has changed.

@@ -74,6 +74,8 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         View registerServiceTextView = rootView.findViewById(R.id.register_service);
         View discoverServiceTextView = rootView.findViewById(R.id.discover_service);
 
+        View clearResourcesTextView = rootView.findViewById(R.id.clear_resources);
+
         registerServiceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -84,6 +86,16 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
             @Override
             public void onClick(View v) {
                 presenter.discover();
+            }
+        });
+        clearResourcesTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                presenter.unregisterServiceRequest();
+                presenter.stopDiscovery();
+                presenter.destroyGroup();
+                presenter.cancelAnyOngoingGroupNegotiation();
+                presenter.resetData();
             }
         });
 
@@ -115,6 +127,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         presenter.unregisterServiceRequest();
         presenter.stopDiscovery();
         presenter.destroyGroup();
+        presenter.cancelAnyOngoingGroupNegotiation();
     }
 
     @Override

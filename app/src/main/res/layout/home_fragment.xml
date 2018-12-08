@@ -68,6 +68,19 @@
         app:layout_constraintLeft_toRightOf="@id/register_service"
         app:layout_constraintTop_toBottomOf="@id/group_owner_ip_address" />
 
+    <TextView
+        android:id="@+id/clear_resources"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/rounded_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="8dp"
+        android:text="Clear resources"
+        app:layout_constraintLeft_toRightOf="@id/send_message"
+        app:layout_constraintTop_toBottomOf="@id/group_owner_ip_address" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/peer_list"
         android:layout_marginTop="16dp"

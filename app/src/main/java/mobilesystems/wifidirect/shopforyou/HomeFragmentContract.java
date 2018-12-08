@@ -33,6 +33,10 @@ public interface HomeFragmentContract {
 
         void destroyGroup();
 
+        void cancelAnyOngoingGroupNegotiation();
+
         void saveMessage(@NonNull String code, @NonNull String description);
+
+        void resetData();
     }
 }

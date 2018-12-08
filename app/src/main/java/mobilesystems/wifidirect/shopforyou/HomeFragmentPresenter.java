@@ -114,6 +114,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
                                                         WifiP2pDevice device) {
 
                         if (SERVICE_INSTANCE.equalsIgnoreCase(instanceName)) {
+                            Log.d(TAG, "received service: " + SERVICE_INSTANCE);
                             List<PeerModel> peerList = Collections.singletonList(
                                     new PeerModel(device.deviceName, device.deviceAddress,
                                             device.primaryDeviceType,
@@ -224,16 +225,16 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private void connect(@NonNull String deviceAddress) {
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = deviceAddress;
-        config.wps.setup = WpsInfo.PBC;
 
-        unregisterServiceRequest();
+//        unregisterServiceRequest();
+        Log.d(TAG, "connection requested");
         /*
          * registers for WIFI_P2P_CONNECTION_CHANGED_ACTION
          */
         manager.connect(channel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                view.displayConfirmationMessage("Connection successful");
+                Log.d(TAG, "Connection successful");
             }
 
             @Override
@@ -249,7 +250,6 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     //region WifiP2pManager.ConnectionInfoListener
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-        //TODO we need to clear this list as it might cause unwanted behaviors. Like trying to connect to an old IP or similar?
         this.groupPeerInfoList.add(info);
 
         view.displayDeviceInfo(
@@ -264,6 +264,21 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     //endregion
 
     @Override
+    public void cancelAnyOngoingGroupNegotiation() {
+        manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "Cancelled any ongoing group negotiation");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d(TAG, "Cancel ongoing group negotiation failed" + reason);
+            }
+        });
+    }
+
+    @Override
     public void saveMessage(@NonNull String code, @NonNull String description) {
         final ItemEntity itemEntity = new ItemEntity();
         itemEntity.setCode(code);
@@ -274,5 +289,16 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
                 database.itemDao().insert(itemEntity);
             }
         });
+    }
+
+    @Override
+    public void resetData() {
+        // Need to clear this list as it might cause unwanted behaviors.
+        // Like trying to connect to an old IP or similar
+        this.groupPeerInfoList.clear();
+        // Clearing the data in the adapter list
+        this.listAdapterPresenter.populateList(Collections.<PeerModel>emptyList());
+        // clearing information about the group formation
+        view.displayDeviceInfo("", "");
     }
 }

@@ -70,6 +70,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         ownerIPAddressTextView = rootView.findViewById(R.id.group_owner_ip_address);
         messageFromTheOtherSideTextView = rootView.findViewById(R.id.message_from_other_peer);
 
+
         View discoverPeersCta = rootView.findViewById(R.id.request_peers);
         discoverPeersCta.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,6 +86,18 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
                 presenter.sendMessageToConnectedPeer();
             }
         });
+
+        View clearResourcesTextView = rootView.findViewById(R.id.clear_resources);
+        clearResourcesTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                presenter.stopDiscovery();
+                presenter.destroyGroup();
+                presenter.cancelAnyOngoingGroupNegotiation();
+                presenter.resetData();
+            }
+        });
+
         return rootView;
     }
 
@@ -99,6 +112,13 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         super.onPause();
         //To prevent memory leaks
         getActivity().unregisterReceiver(broadcastReceiver);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        presenter.stopDiscovery();
+        presenter.destroyGroup();
     }
 
     /**

@@ -4,6 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -12,14 +15,17 @@ import mobilesystems.wifidirect.shopforyou.HomeFragmentContract;
 
 import static android.net.wifi.p2p.WifiP2pManager.EXTRA_WIFI_STATE;
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION;
+import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION;
+import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED;
+import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION;
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION;
-import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_STATE_ENABLED;
 import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION;
+import static java.util.Objects.requireNonNull;
 
 public class WiFi2P2BroadcastReceiver extends BroadcastReceiver {
 
-    private static final @NonNull String TAG = "WIFI_P2P";
+    private static final @NonNull String TAG = "MOBILE_SYSTEM_BR";
 
     private final @NonNull HomeFragmentContract.Presenter homePresenter;
 
@@ -46,44 +52,60 @@ public class WiFi2P2BroadcastReceiver extends BroadcastReceiver {
          */
 
         String action = intent.getAction();
-        /*
-         * Intent is received when the state of the Wi-Fi p2p has changed.
-         */
-        if (WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
-            Log.d(TAG, "received intent: " + WIFI_P2P_STATE_CHANGED_ACTION);
-            /*
-             * Indicates whether Wi-Fi p2p is enabled or disabled
-             */
-            int wifiP2PState = intent.getIntExtra(EXTRA_WIFI_STATE, -1);
-            Log.d(TAG, "WiFi P2P status: " + wifiP2PState);
 
-            homePresenter.showWiFiStatus(WIFI_P2P_STATE_ENABLED == wifiP2PState);
-        } else
+        switch (requireNonNull(action)) {
+            /*
+             * Intent is received when the state of the Wi-Fi p2p has changed.
+             */
+            case WIFI_P2P_STATE_CHANGED_ACTION:
+                Log.d(TAG, "received intent: " + WIFI_P2P_STATE_CHANGED_ACTION);
+                /*
+                 * Indicates whether Wi-Fi p2p is enabled or disabled
+                 */
+                int wifiP2PState = intent.getIntExtra(EXTRA_WIFI_STATE, -1);
+                Log.d(TAG, "WiFi P2P status enabled: " + wifiP2PState);
+                break;
             /*
              * Intent is received when the peer list has changed.
              * It can happen when a peer is found, lost or updated
              */
-            if (WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-                Log.d(TAG, "received intent: " + WIFI_P2P_PEERS_CHANGED_ACTION);
-
+            case WIFI_P2P_PEERS_CHANGED_ACTION:
+                //Ignoring this intent as the list of peers is handled in the Service Request Callback
+                Log.d(TAG, "received intent: " + WIFI_P2P_PEERS_CHANGED_ACTION + " contains the list of peers available");
                 homePresenter.populatePeerList();
-            } else
-                /*
-                 * //TODO Add comment
-                 */
-                if (WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
-                    Log.d(TAG, "received intent: " + WIFI_P2P_CONNECTION_CHANGED_ACTION);
-                    // TODO add code to request requestConnectionInfo
-                    NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-                    if(networkInfo.isConnected()) {
-                        homePresenter.requestDeviceConnectionInfo();
-                    }
-                } else
-                    /*
-                     * //TODO Add comment
-                     */
-                    if (WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
-                        Log.d(TAG, "received intent: " + WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-                    }
+                break;
+            case WIFI_P2P_CONNECTION_CHANGED_ACTION:
+                Log.d(TAG, "received intent: " + WIFI_P2P_CONNECTION_CHANGED_ACTION);
+
+                WifiP2pGroup wifiP2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+                Log.d(TAG, "wifiDirectGroup: " + wifiP2pGroup);
+                WifiP2pInfo wifiP2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
+                Log.d(TAG, "wifiDirectInfo: " + wifiP2pInfo);
+
+                NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                Log.d(TAG, "networkInfo: " + networkInfo);
+                if (networkInfo.isConnected()) {
+                    homePresenter.requestDeviceConnectionInfo();
+                }
+                break;
+            case WIFI_P2P_THIS_DEVICE_CHANGED_ACTION:
+                WifiP2pDevice device = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
+                Log.d(TAG, "received intent: " + WIFI_P2P_THIS_DEVICE_CHANGED_ACTION + "\n" + device);
+                break;
+            case WIFI_P2P_DISCOVERY_CHANGED_ACTION:
+                Log.d(TAG, "received intent: " + WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+                Integer discoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -1);
+                if (discoveryState == WIFI_P2P_DISCOVERY_STOPPED) {
+                    Log.d(TAG, "discovery stopped");
+                } else if (discoveryState == WIFI_P2P_DISCOVERY_STARTED) {
+                    Log.d(TAG, "discovery started");
+                } else {
+                    Log.d(TAG, "discovery status unknown");
+                }
+                break;
+            default:
+                // NOOP
+                break;
+        }
     }
 }

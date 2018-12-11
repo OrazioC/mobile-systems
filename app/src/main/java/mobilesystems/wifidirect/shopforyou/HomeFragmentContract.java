@@ -23,8 +23,6 @@ public interface HomeFragmentContract {
 
         void init();
 
-        void showWiFiStatus(boolean isWiFiEnabled);
-
         void startDiscovery();
 
         void populatePeerList();
@@ -34,5 +32,13 @@ public interface HomeFragmentContract {
         void displayMessage(@NonNull String message);
 
         void sendMessageToConnectedPeer();
+
+        void stopDiscovery();
+
+        void destroyGroup();
+
+        void resetData();
+
+        void cancelAnyOngoingGroupNegotiation();
     }
 }

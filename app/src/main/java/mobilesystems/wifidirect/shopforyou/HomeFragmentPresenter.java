@@ -1,6 +1,5 @@
 package mobilesystems.wifidirect.shopforyou;
 
-import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -8,10 +7,10 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -224,7 +223,6 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private void connect(@NonNull String deviceAddress) {
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = deviceAddress;
-        config.wps.setup = WpsInfo.PBC;
 
         unregisterServiceRequest();
         /*
@@ -249,16 +247,20 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     //region WifiP2pManager.ConnectionInfoListener
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-        //TODO we need to clear this list as it might cause unwanted behaviors. Like trying to connect to an old IP or similar?
         this.groupPeerInfoList.add(info);
 
         view.displayDeviceInfo(
-                info.isGroupOwner ? "The device is the group owner" : "device is part of a group",
-                info.groupOwnerAddress.toString()
+                info.isGroupOwner
+                        ? "The device is the Group Owner"
+                        : "The device is a P2P Client"
         );
 
-        if (info.groupFormed && info.isGroupOwner) {
-            new InfoTransferAsyncTask(this).execute();
+        if (info.groupFormed) {
+            if (info.isGroupOwner) {
+                new InfoTransferAsyncTask(this).execute();
+            } else {
+                view.showSendButton(true);
+            }
         }
     }
     //endregion
@@ -274,5 +276,19 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
                 database.itemDao().insert(itemEntity);
             }
         });
+    }
+
+    @Override
+    public void showMessage(@NonNull String code, @NonNull String description) {
+        view.displayConfirmationMessage(code + " " + description);
+    }
+
+    @Override
+    public void updatePeerList(Collection<WifiP2pDevice> peers) {
+        List<PeerModel> peerList = new ArrayList<>();
+        for (WifiP2pDevice device : peers) {
+            peerList.add(new PeerModel(device.deviceName, device.deviceAddress, device.primaryDeviceType, deviceConnectionStatusMapper.map(device.status)));
+        }
+        listAdapterPresenter.populateList(peerList);
     }
 }

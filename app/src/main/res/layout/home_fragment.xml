@@ -15,7 +15,7 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="8dp"
-        android:text="Register Service"
+        android:text="@string/register_service"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -28,10 +28,9 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="8dp"
-        android:text="Discover Service"
+        android:text="@string/discover_service"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/register_service" />
-
 
     <TextView
         android:id="@+id/device_info"
@@ -45,28 +44,21 @@
         tools:text="I am the group owner" />
 
     <TextView
-        android:id="@+id/group_owner_ip_address"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintLeft_toRightOf="@id/register_service"
-        app:layout_constraintTop_toBottomOf="@id/device_info"
-        tools:text="Group owner ip" />
-
-    <TextView
         android:id="@+id/send_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
         android:background="@drawable/rounded_bg"
         android:clickable="true"
         android:focusable="true"
         android:padding="8dp"
-        android:text="Send Message"
+        android:text="@string/send_message"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/discover_service"
         app:layout_constraintLeft_toRightOf="@id/register_service"
-        app:layout_constraintTop_toBottomOf="@id/group_owner_ip_address" />
+        app:layout_constraintStart_toEndOf="@+id/discover_service"
+        app:layout_constraintTop_toTopOf="@+id/discover_service"
+        tools:visibility="visible" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/peer_list"

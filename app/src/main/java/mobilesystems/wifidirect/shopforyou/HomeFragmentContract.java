@@ -1,6 +1,9 @@
 package mobilesystems.wifidirect.shopforyou;
 
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.support.annotation.NonNull;
+
+import java.util.Collection;
 
 public interface HomeFragmentContract {
     interface View {
@@ -9,10 +12,11 @@ public interface HomeFragmentContract {
 
         void displayError(@NonNull String errorMessage);
 
-        void displayDeviceInfo(@NonNull String deviceInfo,
-                               @NonNull String groupOwnerIpAddress);
+        void displayDeviceInfo(@NonNull String deviceInfo);
 
         void startTransferService(@NonNull String address);
+
+        void showSendButton(boolean show);
     }
 
     interface Presenter {
@@ -34,5 +38,9 @@ public interface HomeFragmentContract {
         void destroyGroup();
 
         void saveMessage(@NonNull String code, @NonNull String description);
+
+        void showMessage(@NonNull String code, @NonNull String description);
+
+        void updatePeerList(Collection<WifiP2pDevice> clientList);
     }
 }

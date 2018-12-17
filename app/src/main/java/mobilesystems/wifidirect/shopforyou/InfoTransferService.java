@@ -17,6 +17,8 @@ import static java.util.Objects.requireNonNull;
 
 public class InfoTransferService extends IntentService {
 
+    private static final @NonNull String TAG = "MOBILE_SYSTEM_AT";
+
     private final static String ACTION_SEND_MESSAGE = "ACTION_SEND_MESSAGE";
     private final static String EXTRAS_GROUP_OWNER_ADDRESS = "EXTRAS_GROUP_OWNER_ADDRESS";
     private final static String EXTRAS_GROUP_OWNER_PORT = "EXTRAS_GROUP_OWNER_PORT";
@@ -44,7 +46,7 @@ public class InfoTransferService extends IntentService {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        Log.d("Transfer service", "onHandleIntent");
+        Log.d(TAG, "onHandleIntent");
         assert intent != null;
         String host = requireNonNull(intent.getExtras()).getString(EXTRAS_GROUP_OWNER_ADDRESS);
         int port = requireNonNull(intent.getExtras()).getInt(EXTRAS_GROUP_OWNER_PORT);
@@ -53,14 +55,14 @@ public class InfoTransferService extends IntentService {
             Socket socket = new Socket();
             try {
                 socket.bind(null);
-                Log.d("Transfer Service", "Connecting to host: " + host + ", port: " + port);
+                Log.d(TAG, "Connecting to host: " + host + ", port: " + port);
                 socket.connect((new InetSocketAddress(host, port)), 5000);
-                Log.d("Transfer Service", "Client socket - " + socket.isConnected());
+                Log.d(TAG, "Client socket - " + socket.isConnected());
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                writer.append("code1\tdescription");
+                writer.append("code\tdescription");
                 writer.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.d(TAG, e.getMessage());
             } finally {
                 if (socket.isConnected()) {
                     try {

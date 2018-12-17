@@ -12,7 +12,11 @@ import java.net.Socket;
 
 public class InfoTransferAsyncTask extends AsyncTask<Void, Void, String> {
 
-    private @NonNull HomeFragmentContract.Presenter presenter;
+    private static final @NonNull
+    String TAG = "MOBILE_SYSTEM_AT";
+
+    private @NonNull
+    HomeFragmentContract.Presenter presenter;
 
     public InfoTransferAsyncTask(@NonNull HomeFragmentContract.Presenter presenter) {
         this.presenter = presenter;
@@ -25,22 +29,20 @@ public class InfoTransferAsyncTask extends AsyncTask<Void, Void, String> {
         try {
             ServerSocket serverSocket = new ServerSocket(8988);
 
-            Log.d("Transfer Async Task", "Server: socket opened");
+            Log.d(TAG, "Server: socket opened");
             // needs android.permission.INTERNET
             Socket client = serverSocket.accept();
-            Log.d("Transfer Async Task", "Server: connection made");
+            Log.d(TAG, "Server: connection made");
 
             BufferedReader r = new BufferedReader(new InputStreamReader(client.getInputStream()));
             StringBuilder message = new StringBuilder();
             for (String line; (line = r.readLine()) != null; ) {
                 message.append(line).append('\n');
             }
-            String[] item = message.toString().split("\t");
-            presenter.saveMessage(item[0], item[1]);
 
             return message.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.d(TAG, e.getMessage());
             return null;
         }
     }
@@ -49,5 +51,10 @@ public class InfoTransferAsyncTask extends AsyncTask<Void, Void, String> {
     @Override
     protected void onPostExecute(String message) {
         super.onPostExecute(message);
+        if (message != null && !message.isEmpty()) {
+            String[] item = message.split("\t");
+            presenter.saveMessage(item[0], item[1]);
+            presenter.showMessage(item[0], item[1]);
+        }
     }
 }

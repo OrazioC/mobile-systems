@@ -25,7 +25,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
 
 
     private TextView deviceInfoTextView;
-    private TextView ownerIPAddressTextView;
+    private TextView sendMessageCta;
 
     private HomeFragmentContract.Presenter presenter;
     private WiFi2P2BroadcastReceiver broadcastReceiver;
@@ -69,7 +69,14 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         broadcastReceiver = new WiFi2P2BroadcastReceiver(presenter);
 
         deviceInfoTextView = rootView.findViewById(R.id.device_info);
-        ownerIPAddressTextView = rootView.findViewById(R.id.group_owner_ip_address);
+        sendMessageCta = rootView.findViewById(R.id.send_message);
+
+        sendMessageCta.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                presenter.sendMessageToConnectedPeer();
+            }
+        });
 
         View registerServiceTextView = rootView.findViewById(R.id.register_service);
         View discoverServiceTextView = rootView.findViewById(R.id.discover_service);
@@ -84,14 +91,6 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
             @Override
             public void onClick(View v) {
                 presenter.discover();
-            }
-        });
-
-        View sendMessageCta = rootView.findViewById(R.id.send_message);
-        sendMessageCta.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                presenter.sendMessageToConnectedPeer();
             }
         });
     }
@@ -128,14 +127,17 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     }
 
     @Override
-    public void displayDeviceInfo(@NonNull String deviceInfo,
-                                  @NonNull String groupOwnerIpAddress) {
+    public void displayDeviceInfo(@NonNull String deviceInfo) {
         deviceInfoTextView.setText(deviceInfo);
-        ownerIPAddressTextView.setText(groupOwnerIpAddress);
     }
 
     @Override
     public void startTransferService(@NonNull String address) {
         getActivity().startService(InfoTransferService.createIntent(getContext(), address));
+    }
+
+    @Override
+    public void showSendButton(boolean show) {
+        sendMessageCta.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 }

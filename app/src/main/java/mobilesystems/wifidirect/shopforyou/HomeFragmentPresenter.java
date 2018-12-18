@@ -6,6 +6,7 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -18,11 +19,13 @@ import java.util.concurrent.Executors;
 
 import mobilesystems.wifidirect.shopforyou.database.AppDatabase;
 import mobilesystems.wifidirect.shopforyou.database.ItemEntity;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerConnectionStatusMapper;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterContract;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterPresenter;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListener;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerModel;
+import mobilesystems.wifidirect.shopforyou.peerlist.PeerModelMapper;
 
 public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, WifiP2pManager.ConnectionInfoListener {
 
@@ -35,8 +38,8 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private @NonNull PeerListAdapterContract.Presenter listAdapterPresenter;
     private @NonNull WifiP2pManager manager;
     private @NonNull WifiP2pManager.Channel channel;
-    private @NonNull DeviceConnectionStatusMapper deviceConnectionStatusMapper;
-    private @NonNull DiscoveryFailureErrorMapper errorMapper;
+    private @NonNull PeerModelMapper modelMapper;
+    private @NonNull ErrorMapper errorMapper;
     private @NonNull AppDatabase database;
 
     private @NonNull List<WifiP2pInfo> groupPeerInfoList = new ArrayList<>();
@@ -52,8 +55,8 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         this.listAdapterPresenter = new PeerListAdapterPresenter(adapter);
         this.manager = manager;
         this.channel = channel;
-        this.deviceConnectionStatusMapper = new DeviceConnectionStatusMapper();
-        this.errorMapper = new DiscoveryFailureErrorMapper();
+        this.modelMapper = new PeerModelMapper(new PeerConnectionStatusMapper());
+        this.errorMapper = new ErrorMapper();
         this.database = database;
     }
 
@@ -67,18 +70,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         });
     }
 
-    //region WifiP2PManager
-    @Override
-    public void requestDeviceConnectionInfo() {
-        // WifiP2pManager.ConnectionInfoListener
-        manager.requestConnectionInfo(channel, this);
-    }
-
-    @Override
-    public void sendMessageToConnectedPeer() {
-        view.startTransferService(groupPeerInfoList.get(0).groupOwnerAddress.getHostAddress());
-    }
-
+    //region Register Service
     @Override
     public void register() {
         Map<String, String> record = Collections.emptyMap();
@@ -90,12 +82,15 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
             }
 
             @Override
-            public void onFailure(int error) {
-                view.displayError("Failed to add a service");
+            public void onFailure(@IntRange(from = 0, to = 2) int reasonCode) {
+                view.displayError("Failed to add a service - "
+                        + errorMapper.map(reasonCode));
             }
         });
     }
+    //endregion
 
+    //region Discover Service
     @Override
     public void discover() {
         attachDnsSdListeners();
@@ -103,7 +98,6 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         discoverService();
     }
 
-    //region Discover Service
     private void attachDnsSdListeners() {
         WifiP2pManager.DnsSdServiceResponseListener serviceListener =
                 new WifiP2pManager.DnsSdServiceResponseListener() {
@@ -113,10 +107,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
                                                         WifiP2pDevice device) {
 
                         if (SERVICE_INSTANCE.equalsIgnoreCase(instanceName)) {
-                            List<PeerModel> peerList = Collections.singletonList(
-                                    new PeerModel(device.deviceName, device.deviceAddress,
-                                            device.primaryDeviceType,
-                                            deviceConnectionStatusMapper.map(device.status)));
+                            List<PeerModel> peerList = Collections.singletonList(modelMapper.map(device));
                             listAdapterPresenter.populateList(peerList);
                         } else {
                             Log.d(TAG, "received service: " + instanceName);
@@ -148,8 +139,9 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
                     }
 
                     @Override
-                    public void onFailure(int arg0) {
-                        view.displayError("Failed adding service discovery request");
+                    public void onFailure(@IntRange(from = 0, to = 3) int reasonCode) {
+                        view.displayError("Failed adding service discovery request - "
+                                + errorMapper.map(reasonCode));
                     }
                 });
     }
@@ -162,13 +154,15 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
             }
 
             @Override
-            public void onFailure(int arg0) {
-                view.displayError("Service discovery failed");
+            public void onFailure(@IntRange(from = 0, to = 3) int reasonCode) {
+                view.displayError("Service discovery failed - "
+                        + errorMapper.map(reasonCode));
             }
         });
     }
     //endregion
 
+    //region Release Resources
     @Override
     public void unregisterServiceRequest() {
         if (serviceRequest != null) {
@@ -179,14 +173,14 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
                 }
 
                 @Override
-                public void onFailure(int reason) {
-                    view.displayError("Failed removing service discovery request");
+                public void onFailure(@IntRange(from = 0, to = 2) int reasonCode) {
+                    view.displayError("Failed removing service discovery request - "
+                            + errorMapper.map(reasonCode));
                 }
             });
         }
     }
 
-    //region Release Resources
     @Override
     public void stopDiscovery() {
         manager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
@@ -196,8 +190,9 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
             }
 
             @Override
-            public void onFailure(int arg0) {
-                view.displayError("Service discovery stop failed");
+            public void onFailure(@IntRange(from = 0, to = 2) int reasonCode) {
+                view.displayError("Service discovery stop failed - "
+                        + errorMapper.map(reasonCode));
             }
         });
     }
@@ -207,19 +202,20 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
 
             @Override
-            public void onFailure(int reasonCode) {
-                view.displayError("Group removal failed");
-            }
-
-            @Override
             public void onSuccess() {
                 view.displayConfirmationMessage("Group removed");
             }
 
+            @Override
+            public void onFailure(@IntRange(from = 0, to = 2) int reasonCode) {
+                view.displayError("Group removal failed - "
+                        + errorMapper.map(reasonCode));
+            }
         });
     }
     //endregion
 
+    //region Connection handler
     private void connect(@NonNull String deviceAddress) {
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = deviceAddress;
@@ -231,20 +227,23 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         manager.connect(channel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                view.displayConfirmationMessage("Connection successful");
+                view.displayConfirmationMessage("Connection requested");
             }
 
             @Override
-            public void onFailure(int reason) {
-                view.displayError(errorMapper.map(reason));
+            public void onFailure(int reasonCode) {
+                view.displayError("Group removal failed" + errorMapper.map(reasonCode));
             }
         });
     }
     //endregion
 
-    //endregion
+    //region WifiP2PManager.ConnectionInfoListener
+    @Override
+    public void requestDeviceConnectionInfo() {
+        manager.requestConnectionInfo(channel, this);
+    }
 
-    //region WifiP2pManager.ConnectionInfoListener
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
         this.groupPeerInfoList.add(info);
@@ -265,6 +264,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
     //endregion
 
+    //region Message handler
     @Override
     public void saveMessage(@NonNull String code, @NonNull String description) {
         final ItemEntity itemEntity = new ItemEntity();
@@ -279,15 +279,21 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
 
     @Override
+    public void sendMessageToConnectedPeer() {
+        view.startTransferService(groupPeerInfoList.get(0).groupOwnerAddress.getHostAddress());
+    }
+
+    @Override
     public void showMessage(@NonNull String code, @NonNull String description) {
         view.displayConfirmationMessage(code + " " + description);
     }
+    //endregion
 
     @Override
     public void updatePeerList(Collection<WifiP2pDevice> peers) {
         List<PeerModel> peerList = new ArrayList<>();
         for (WifiP2pDevice device : peers) {
-            peerList.add(new PeerModel(device.deviceName, device.deviceAddress, device.primaryDeviceType, deviceConnectionStatusMapper.map(device.status)));
+            peerList.add(modelMapper.map(device));
         }
         listAdapterPresenter.populateList(peerList);
     }

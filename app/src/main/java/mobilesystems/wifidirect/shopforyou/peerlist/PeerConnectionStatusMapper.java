@@ -1,9 +1,9 @@
-package mobilesystems.wifidirect.shopforyou;
+package mobilesystems.wifidirect.shopforyou.peerlist;
 
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 
-public class DeviceConnectionStatusMapper {
+public class PeerConnectionStatusMapper {
 
     public @NonNull String map (@IntRange(from = 0, to = 4) int status) {
         switch (status) {

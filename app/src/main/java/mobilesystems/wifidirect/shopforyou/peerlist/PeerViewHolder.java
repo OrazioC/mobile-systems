@@ -6,6 +6,8 @@ import android.widget.TextView;
 
 import mobilesystems.wifidirect.shopforyou.R;
 
+import static mobilesystems.wifidirect.shopforyou.peerlist.PeerConnectionStatusMapper.CONNECTION_STATUS_CONNECTED;
+
 public class PeerViewHolder extends RecyclerView.ViewHolder {
 
     private PeerListener listener;
@@ -32,6 +34,12 @@ public class PeerViewHolder extends RecyclerView.ViewHolder {
         peerAddressView.setText(model.address);
         peerTypeView.setText(model.type);
         peerStatusView.setText(model.status);
+
+        if (CONNECTION_STATUS_CONNECTED.equalsIgnoreCase(model.status)) {
+            connectView.setVisibility(View.GONE);
+        } else {
+            connectView.setVisibility(View.VISIBLE);
+        }
 
         connectView.setOnClickListener(new View.OnClickListener() {
             @Override

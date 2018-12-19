@@ -1,4 +1,4 @@
-package mobilesystems.wifidirect.shopforyou;
+package mobilesystems.wifidirect.shopforyou.information_transfer;
 
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
@@ -10,13 +10,13 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import mobilesystems.wifidirect.shopforyou.HomeFragmentContract;
+
 public class InfoTransferAsyncTask extends AsyncTask<Void, Void, String> {
 
-    private static final @NonNull
-    String TAG = "MOBILE_SYSTEM_AT";
+    private static final @NonNull String TAG = "MOBILE_SYSTEM_AT";
 
-    private @NonNull
-    HomeFragmentContract.Presenter presenter;
+    private @NonNull HomeFragmentContract.Presenter presenter;
 
     public InfoTransferAsyncTask(@NonNull HomeFragmentContract.Presenter presenter) {
         this.presenter = presenter;

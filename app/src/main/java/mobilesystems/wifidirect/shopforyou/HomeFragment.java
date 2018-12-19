@@ -16,13 +16,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import mobilesystems.wifidirect.shopforyou.broadcastreceiver.WiFi2P2BroadcastReceiver;
+import mobilesystems.wifidirect.shopforyou.information_transfer.InfoTransferService;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 
 import static android.os.Looper.getMainLooper;
 import static java.util.Objects.requireNonNull;
 
 public class HomeFragment extends Fragment implements HomeFragmentContract.View {
-
 
     private TextView deviceInfoTextView;
     private TextView sendMessageCta;
@@ -80,6 +80,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
 
         View registerServiceTextView = rootView.findViewById(R.id.register_service);
         View discoverServiceTextView = rootView.findViewById(R.id.discover_service);
+        View clearTextView = rootView.findViewById(R.id.clear_resources);
 
         registerServiceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,6 +92,16 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
             @Override
             public void onClick(View v) {
                 presenter.discover();
+            }
+        });
+        clearTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                presenter.unregisterServiceRequest();
+                presenter.stopDiscovery();
+                presenter.cancelAnyOngoingGroupNegotiation();
+                presenter.destroyGroup();
+                presenter.clearInfo();
             }
         });
     }
@@ -113,6 +124,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         super.onDestroy();
         presenter.unregisterServiceRequest();
         presenter.stopDiscovery();
+        presenter.cancelAnyOngoingGroupNegotiation();
         presenter.destroyGroup();
     }
 

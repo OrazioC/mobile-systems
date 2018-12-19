@@ -35,7 +35,7 @@
             the service is only available to this app.
         -->
         <service
-            android:name=".InfoTransferService"
+            android:name=".information_transfer.InfoTransferService"
             android:exported="false" />
     </application>
 </manifest>

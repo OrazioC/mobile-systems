@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 
 import mobilesystems.wifidirect.shopforyou.database.AppDatabase;
 import mobilesystems.wifidirect.shopforyou.database.ItemEntity;
+import mobilesystems.wifidirect.shopforyou.information_transfer.InfoTransferAsyncTask;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerConnectionStatusMapper;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapter;
 import mobilesystems.wifidirect.shopforyou.peerlist.PeerListAdapterContract;
@@ -198,6 +199,22 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     }
 
     @Override
+    public void cancelAnyOngoingGroupNegotiation() {
+        manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "Cancelled any ongoing group negotiation");
+            }
+
+            @Override
+            public void onFailure(@IntRange(from = 0, to = 2) int reasonCode) {
+                Log.d(TAG, "Cancel ongoing group negotiation failed - "
+                        + errorMapper.map(reasonCode));
+            }
+        });
+    }
+
+    @Override
     public void destroyGroup() {
         manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
 
@@ -246,7 +263,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
 
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-        this.groupPeerInfoList.add(info);
+        groupPeerInfoList.add(info);
 
         view.displayDeviceInfo(
                 info.isGroupOwner
@@ -290,11 +307,24 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     //endregion
 
     @Override
-    public void updatePeerList(Collection<WifiP2pDevice> peers) {
+    public void updatePeerList(@NonNull Collection<WifiP2pDevice> peers) {
         List<PeerModel> peerList = new ArrayList<>();
         for (WifiP2pDevice device : peers) {
             peerList.add(modelMapper.map(device));
         }
         listAdapterPresenter.populateList(peerList);
+    }
+
+    @Override
+    public void clearInfo() {
+        // Need to clear this list as it might cause unwanted behaviors.
+        // Like trying to connect to an old IP or similar
+        groupPeerInfoList.clear();
+        // Clearing the data in the adapter list
+        listAdapterPresenter.populateList(Collections.<PeerModel>emptyList());
+        // Clearing information about the group formation
+        view.displayDeviceInfo("");
+        // Hiding send button
+        view.showSendButton(false);
     }
 }

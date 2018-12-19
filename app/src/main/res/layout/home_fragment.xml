@@ -33,13 +33,28 @@
         app:layout_constraintTop_toBottomOf="@id/register_service" />
 
     <TextView
+        android:id="@+id/clear_resources"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/rounded_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="8dp"
+        android:text="@string/clear_resources"
+        app:layout_constraintBottom_toBottomOf="@+id/discover_service"
+        app:layout_constraintStart_toEndOf="@+id/discover_service"
+        app:layout_constraintTop_toTopOf="@+id/discover_service"
+        app:layout_constraintLeft_toLeftOf="parent"/>
+
+    <TextView
         android:id="@+id/device_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
         android:clickable="true"
         android:focusable="true"
-        app:layout_constraintLeft_toRightOf="@id/discover_service"
+        app:layout_constraintStart_toEndOf="@+id/register_service"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="I am the group owner" />
 
@@ -54,10 +69,9 @@
         android:padding="8dp"
         android:text="@string/send_message"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/discover_service"
-        app:layout_constraintLeft_toRightOf="@id/register_service"
-        app:layout_constraintStart_toEndOf="@+id/discover_service"
-        app:layout_constraintTop_toTopOf="@+id/discover_service"
+        app:layout_constraintBottom_toBottomOf="@+id/clear_resources"
+        app:layout_constraintStart_toEndOf="@+id/clear_resources"
+        app:layout_constraintTop_toTopOf="@+id/clear_resources"
         tools:visibility="visible" />
 
     <android.support.v7.widget.RecyclerView

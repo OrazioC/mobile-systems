@@ -8,10 +8,10 @@ public class PeerModel {
     public final @NonNull String type;
     public final @NonNull String status;
 
-    public PeerModel(@NonNull String name,
-                     @NonNull String address,
-                     @NonNull String type,
-                     @NonNull String status) {
+    PeerModel(@NonNull String name,
+              @NonNull String address,
+              @NonNull String type,
+              @NonNull String status) {
         this.name = name;
         this.address = address;
         this.type = type;

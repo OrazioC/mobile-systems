@@ -5,18 +5,24 @@ import android.support.annotation.NonNull;
 
 public class PeerConnectionStatusMapper {
 
+    static final @NonNull String CONNECTION_STATUS_CONNECTED = "CONNECTED";
+    private static final @NonNull String CONNECTION_STATUS_INVITED = "INVITED";
+    private static final @NonNull String CONNECTION_STATUS_FAILED = "FAILED";
+    private static final @NonNull String CONNECTION_STATUS_AVAILABLE = "AVAILABLE";
+    private static final @NonNull String CONNECTION_STATUS_UNAVAILABLE = "UNAVAILABLE";
+
     public @NonNull String map (@IntRange(from = 0, to = 4) int status) {
         switch (status) {
             case 0:
-                return "CONNECTED";
+                return CONNECTION_STATUS_CONNECTED;
             case 1:
-                return "INVITED";
+                return CONNECTION_STATUS_INVITED;
             case 2:
-                return "FAILED";
+                return CONNECTION_STATUS_FAILED;
             case 3:
-                return "AVAILABLE";
+                return CONNECTION_STATUS_AVAILABLE;
             case 4:
-                return "UNAVAILABLE";
+                return CONNECTION_STATUS_UNAVAILABLE;
             default:
                 throw new IllegalArgumentException("Connection status not defined");
         }

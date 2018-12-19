@@ -35,12 +35,16 @@ public interface HomeFragmentContract {
 
         void stopDiscovery();
 
+        void cancelAnyOngoingGroupNegotiation();
+
         void destroyGroup();
 
         void saveMessage(@NonNull String code, @NonNull String description);
 
         void showMessage(@NonNull String code, @NonNull String description);
 
-        void updatePeerList(Collection<WifiP2pDevice> clientList);
+        void updatePeerList(@NonNull Collection<WifiP2pDevice> clientList);
+
+        void clearInfo();
     }
 }

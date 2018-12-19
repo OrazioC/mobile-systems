@@ -1,4 +1,4 @@
-package mobilesystems.wifidirect.shopforyou;
+package mobilesystems.wifidirect.shopforyou.information_transfer;
 
 import android.app.IntentService;
 import android.content.Context;

@@ -1,5 +1,6 @@
 package mobilesystems.wifidirect.shopforyou.peerlist;
 
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 
@@ -13,15 +14,15 @@ public class PeerConnectionStatusMapper {
 
     public @NonNull String map (@IntRange(from = 0, to = 4) int status) {
         switch (status) {
-            case 0:
+            case WifiP2pDevice.CONNECTED:
                 return CONNECTION_STATUS_CONNECTED;
-            case 1:
+            case WifiP2pDevice.INVITED:
                 return CONNECTION_STATUS_INVITED;
-            case 2:
+            case WifiP2pDevice.FAILED:
                 return CONNECTION_STATUS_FAILED;
-            case 3:
+            case WifiP2pDevice.AVAILABLE:
                 return CONNECTION_STATUS_AVAILABLE;
-            case 4:
+            case WifiP2pDevice.UNAVAILABLE:
                 return CONNECTION_STATUS_UNAVAILABLE;
             default:
                 throw new IllegalArgumentException("Connection status not defined");

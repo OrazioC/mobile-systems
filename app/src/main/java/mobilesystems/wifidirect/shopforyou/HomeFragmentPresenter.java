@@ -10,6 +10,8 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +35,7 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
     private static final String TAG = "MOBILE_SYSTEM";
     private static final String SERVICE_INSTANCE = "_mobilesystem";
     private static final String TRANSPORT_PROTOCOL = "_tcp";
+    //http://www.dns-sd.org/ServiceTypes.html
     private static final String SERVICE_TYPE = "_presence." + TRANSPORT_PROTOCOL;
 
     private @NonNull HomeFragmentContract.View view;
@@ -326,5 +329,20 @@ public class HomeFragmentPresenter implements HomeFragmentContract.Presenter, Wi
         view.displayDeviceInfo("");
         // Hiding send button
         view.showSendButton(false);
+
+//        deletePersistentGroup(manager, channel);
+    }
+
+    private static void deletePersistentGroup(WifiP2pManager manager, WifiP2pManager.Channel channel) {
+        try {
+            Method method = WifiP2pManager.class.getMethod("deletePersistentGroup",
+                    WifiP2pManager.Channel.class, int.class, WifiP2pManager.ActionListener.class);
+
+            for (int netId = 0; netId < 32; netId++) {
+                method.invoke(manager, channel, netId, null);
+            }
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 }

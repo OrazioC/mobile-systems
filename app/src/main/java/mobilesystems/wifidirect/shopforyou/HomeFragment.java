@@ -129,13 +129,8 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     }
 
     @Override
-    public void displayConfirmationMessage(@NonNull String confirmationMessage) {
-        Toast.makeText(getContext(), confirmationMessage, Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void displayError(@NonNull String errorMessage) {
-        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+    public void displayMessage(@NonNull String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }
 
     @Override

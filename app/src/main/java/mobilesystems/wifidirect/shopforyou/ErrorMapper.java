@@ -2,7 +2,7 @@ package mobilesystems.wifidirect.shopforyou;
 
 import android.support.annotation.IntRange;
 
-class ErrorMapper {
+public class ErrorMapper {
     public String map(@IntRange(from = 0, to = 3) int reason) {
         switch (reason) {
             case 0:

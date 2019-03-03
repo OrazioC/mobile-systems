@@ -8,9 +8,7 @@ import java.util.Collection;
 public interface HomeFragmentContract {
     interface View {
 
-        void displayConfirmationMessage(@NonNull String confirmationMessage);
-
-        void displayError(@NonNull String errorMessage);
+        void displayMessage(@NonNull String confirmationMessage);
 
         void displayDeviceInfo(@NonNull String deviceInfo);
 
@@ -26,6 +24,8 @@ public interface HomeFragmentContract {
         void requestDeviceConnectionInfo();
 
         void sendMessageToConnectedPeer();
+
+        void display(@NonNull String message);
 
         void register();
 
